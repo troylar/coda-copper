@@ -107,6 +107,26 @@ pack.addSyncTable({
   },
 });
 
+pack.addSyncTable({
+  name: "Project",
+  identityName: "Project",
+  schema: schemas.ProjectSchema,
+  dynamicOptions: {
+    getSchema: async function (context) {
+      return schemas.getSchemaWithCustomFields(context, "project");
+    },
+  },
+  formula: {
+    name: "SyncProjects",
+    description: "Sync projects from Copper",
+    cacheTtlSecs: 0,
+    parameters: [],
+    execute: async function ([], context) {
+      return formulas.syncProjects(context);
+    },
+  },
+});
+
 /* -------------------------------------------------------------------------- */
 /*                                  Formulas                                  */
 /* -------------------------------------------------------------------------- */
