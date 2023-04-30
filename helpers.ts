@@ -395,6 +395,59 @@ export function enrichPersonResponse(
   );
 }
 
+export function enrichLeadResponse(
+  lead: any,
+  copperAccountId: string,
+  users: types.CopperUserApiResponse[],
+  contactTypes: types.ApiResponse[],
+  customFieldDefinitions?: types.CustomFieldDefinitionApiResponse[]
+) {
+  lead.fullAddress = concatenateAddress(lead.address);
+  lead.url = getCopperUrl(copperAccountId, "contact", lead.id);
+  // Find the best email to feature as the primary email.
+  if (lead.email) {
+    lead.primaryEmail = lead.email.email;
+  }
+
+  // Prepare reference to companies sync table
+  if (lead.company_name) {
+    lead.company = {
+      name: lead.company_name,
+    };
+  }
+  if (users) {
+    // Prepare reference to Coda Person object (Coda will try to match this
+    // to a Coda user based on email). First, find the matching user.
+    let assignee = users.find((user) => user.id == lead.assignee_id);
+    lead.assignee = {
+      copperUserId: lead.assignee_id,
+      email: assignee?.email,
+      name: assignee?.name,
+    };
+  }
+  if (contactTypes) {
+    // Match contact type and get string representation
+    lead.contactType = contactTypes.find(
+      (contactType) => contactType.id == lead.customer_source_id
+    )?.name;
+  }
+  // Process custom fields
+  let customFields = {};
+  if (customFieldDefinitions && lead.custom_fields) {
+    customFields = prepareCustomFieldsOnRecord(
+      customFieldDefinitions,
+      lead.custom_fields
+    );
+    lead = Object.assign(lead, customFields);
+  }
+
+  return pruneObjectToSchema(
+    lead,
+    schemas.LeadSchema,
+    Object.keys(customFields)
+  );
+}
+
 export function enrichCompanyResponse(
   company: any,
   copperAccountId: string,
@@ -426,6 +479,46 @@ export function enrichCompanyResponse(
     schemas.CompanySchema,
     Object.keys(customFields)
   );
+}
+
+export function enrichProjectResponse(
+  project: any,
+  copperAccountId: string,
+  users: types.CopperUserApiResponse[],
+  customFieldDefinitions?: types.CustomFieldDefinitionApiResponse[]
+) {
+  project.url = getCopperUrl(copperAccountId, "project", project.id);
+  if (users) {
+    // Prepare reference to Coda User object (Coda will try to match this
+    // to a Coda user based on email). First, find the matching user.
+    let assignee = users.find((user) => user.id == project.assignee_id);
+    project.assignee = {
+      copperUserId: project.assignee_id,
+      email: assignee?.email,
+      name: assignee?.name,
+    };
+  }
+  let customFields = {};
+  if (customFieldDefinitions && project.custom_fields) {
+    customFields = prepareCustomFieldsOnRecord(
+      customFieldDefinitions,
+      project.custom_fields
+    );
+    project = Object.assign(project, customFields);
+  }
+  return pruneObjectToSchema(
+    project,
+    schemas.ProjectSchema,
+    Object.keys(customFields)
+  );
+}
+
+export function enrichActivityTypeResponse(
+  activityType: any,
+  activityTypeType: string
+) {
+  activityType.category = activityTypeType;
+  return pruneObjectToSchema(activityType, schemas.ActivityTypeSchema);
 }
 
 // FETCH VERSIONS: Enrich from just a record API response, by fetching the supporting data

@@ -363,8 +363,75 @@ export const PersonSchema = coda.makeObjectSchema({
   },
 });
 
+export const ActivityTypeSchema = coda.makeObjectSchema({
+  type: coda.ValueType.Object,
+  idProperty: "id",
+  displayProperty: "name",
+  properties: {
+    id: { type: coda.ValueType.Number, required: true },
+    category: { type: coda.ValueType.String, required: true },
+    name: { type: coda.ValueType.String, required: true },
+    is_disabled: { type: coda.ValueType.Boolean },
+    count_as_interaction: { type: coda.ValueType.Boolean },
+  },
+  identity: {
+    name: "ActivityType",
+    id: "id",
+  },
+});
+
+export const LeadSchema = coda.makeObjectSchema({
+  type: coda.ValueType.Object,
+  idProperty: "id",
+  displayProperty: "name",
+  featuredProperties: ["email", "phone", "status"],
+  identity: { name: "Lead" },
+  includeUnknownProperties: true,
+  properties: {
+    id: {
+      type: coda.ValueType.String,
+      description: "Unique identifier for the Lead",
+      required: true,
+    },
+    name: {
+      type: coda.ValueType.String,
+      description: "The name of the Lead",
+      required: true,
+    },
+    email: {
+      type: coda.ValueType.String,
+      description: "The email address of the Lead",
+    },
+    phone: {
+      type: coda.ValueType.String,
+      description: "The phone number of the Lead",
+    },
+    status: {
+      type: coda.ValueType.String,
+      description: "The status of the Lead",
+    },
+    source: {
+      type: coda.ValueType.String,
+      description: "The source of the Lead",
+    },
+    date_created: {
+      type: coda.ValueType.Number,
+      description:
+        "A Unix timestamp representing the time at which this Lead was created",
+    },
+    date_modified: {
+      type: coda.ValueType.Number,
+      description:
+        "A Unix timestamp representing the time at which this Lead was last modified",
+    },
+  },
+});
+
 export const PersonReferenceSchema =
   coda.makeReferenceSchemaFromObjectSchema(PersonSchema);
+
+export const LeadReferenceSchema =
+  coda.makeReferenceSchemaFromObjectSchema(LeadSchema);
 
 export const OpportunitySchema = coda.makeObjectSchema({
   type: coda.ValueType.Object,
@@ -511,13 +578,199 @@ export const OpportunitySchema = coda.makeObjectSchema({
   },
 });
 
+export const ProjectSchema = coda.makeObjectSchema({
+  type: coda.ValueType.Object,
+  idProperty: "id",
+  displayProperty: "name",
+  featuredProperties: ["status", "assignee", "related_resource"],
+  identity: { name: "Project" },
+  includeUnknownProperties: true,
+  properties: {
+    id: {
+      type: coda.ValueType.String,
+      description: "Unique identifier for the Project",
+      required: true,
+    },
+    name: {
+      type: coda.ValueType.String,
+      description: "The name of the Project",
+      required: true,
+    },
+    related_resource: {
+      type: coda.ValueType.String,
+      description: "The primary related resource for the Project",
+    },
+    assignee: CopperUserSchema,
+    assignee_id: {
+      type: coda.ValueType.String,
+      description:
+        "Unique identifier of the User that will be the owner of the Project",
+    },
+    status: {
+      type: coda.ValueType.String,
+      description:
+        "The status of the Project. Valid values are: 'Open', 'Completed'",
+    },
+    details: {
+      type: coda.ValueType.String,
+      description: "Description of the Project",
+    },
+    tags: {
+      type: coda.ValueType.Array,
+      description:
+        "An array of the tags associated with the Project, represented as strings",
+      items: coda.makeSchema({
+        type: coda.ValueType.String,
+      }),
+    },
+    date_created: {
+      type: coda.ValueType.Number,
+      description:
+        "A Unix timestamp representing the time at which this Project was created",
+    },
+    date_modified: {
+      type: coda.ValueType.Number,
+      description:
+        "A Unix timestamp representing the time at which this Project was last modified",
+    },
+  },
+});
+
+// Define a schema for a Task object
+const TaskSchema = coda.makeObjectSchema({
+  type: coda.ValueType.Object,
+  idProperty: "id",
+  displayProperty: "name",
+  featuredProperties: [
+    "related_resource",
+    "assignee_id",
+    "due_date",
+    "priority",
+    "status",
+  ],
+  identity: { name: "Task" },
+  includeUnknownProperties: true,
+  properties: {
+    id: {
+      type: coda.ValueType.String,
+      description: "Unique identifier for the Task",
+      required: true,
+      fromKey: "id",
+    },
+    name: {
+      type: coda.ValueType.String,
+      description: "The name of the Task",
+      required: true,
+      fromKey: "name",
+    },
+    related_resource: {
+      type: coda.ValueType.String,
+      description: "The primary related resource for the Task",
+      fromKey: "related_resource",
+    },
+    assignee_id: {
+      type: coda.ValueType.String,
+      description:
+        "Unique identifier of the User that will be the owner of the Task",
+      required: true,
+      fromKey: "assignee_id",
+    },
+    due_date: {
+      type: coda.ValueType.Number,
+      codaType: coda.ValueHintType.Date,
+      description: "The date on which the Task is due",
+      fromKey: "due_date",
+    },
+    reminder_date: {
+      type: coda.ValueType.Number,
+      codaType: coda.ValueHintType.Date,
+      description: "The date on which to receive a reminder about the Task",
+      fromKey: "reminder_date",
+    },
+    completed_date: {
+      type: coda.ValueType.Number,
+      codaType: coda.ValueHintType.Date,
+      description:
+        "The date on which the Task was completed. This is automatically set when the status changes from Open to Completed, and cannot be set directly.",
+      fromKey: "completed_date",
+    },
+    priority: {
+      type: coda.ValueType.String,
+      description: "The priority of the Task",
+      options: ["None", "High"],
+      fromKey: "priority",
+    },
+    status: {
+      type: coda.ValueType.String,
+      description: "The status of the Task",
+      options: ["Open", "Completed"],
+      fromKey: "status",
+    },
+    details: {
+      type: coda.ValueType.String,
+      description: "Description of the Task",
+      fromKey: "details",
+    },
+    tags: {
+      type: coda.ValueType.Array,
+      items: coda.makeSchema({
+        type: coda.ValueType.String,
+      }),
+      description:
+        "An array of the tags associated with the Task, represented as strings",
+      fromKey: "tags",
+    },
+    custom_fields: {
+      type: coda.ValueType.Array,
+      items: coda.makeSchema({
+        type: coda.ValueType.Object,
+        properties: {
+          custom_field_definition_id: {
+            type: coda.ValueType.String,
+            description:
+              "The id of the Custom Field Definition for which this Custom Field stores a value",
+            fromKey: "custom_field_definition_id",
+          },
+          value: {
+            type: coda.ValueType.Mixed,
+            description:
+              "The value (number, string, option id, or timestamp) of this Custom Field",
+            fromKey: "value",
+          },
+        },
+      }),
+      description: "An array of custom field values belonging to the Task",
+      fromKey: "custom_fields",
+    },
+    date_created: {
+      type: coda.ValueType.Number,
+      codaType: coda.ValueHintType.Date,
+      description:
+        "A Unix timestamp representing the time at which this Task was created",
+      fromKey: "date_created",
+    },
+    date_modified: {
+      type: coda.ValueType.Number,
+      codaType: coda.ValueHintType.Date,
+      description:
+        "A Unix timestamp representing the time at which this Task was last modified",
+      fromKey: "date_modified",
+    },
+  },
+});
 /* -------------------------------------------------------------------------- */
 /*                         Dynamic Sync Table Schemas                         */
 /* -------------------------------------------------------------------------- */
 
 export async function getSchemaWithCustomFields(
   context: coda.ExecutionContext,
-  recordType: "person" | "company" | "opportunity"
+  recordType:
+    | "person"
+    | "company"
+    | "opportunity"
+    | "project"
+    | "lead"
+    | "activitytype"
 ) {
   console.log("Getting schema with custom fields for ", recordType);
   // First, load up the appropriate static schema, which we'll add on to
@@ -531,6 +784,15 @@ export async function getSchemaWithCustomFields(
       break;
     case "opportunity":
       staticSchema = OpportunitySchema;
+      break;
+    case "project":
+      staticSchema = ProjectSchema;
+      break;
+    case "lead":
+      staticSchema = LeadSchema;
+      break;
+    case "activitytype":
+      staticSchema = ActivityTypeSchema;
       break;
     default:
       throw new coda.UserVisibleError(

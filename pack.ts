@@ -108,7 +108,7 @@ pack.addSyncTable({
 });
 
 pack.addSyncTable({
-  name: "Project",
+  name: "Projects",
   identityName: "Project",
   schema: schemas.ProjectSchema,
   dynamicOptions: {
@@ -123,6 +123,46 @@ pack.addSyncTable({
     parameters: [],
     execute: async function ([], context) {
       return formulas.syncProjects(context);
+    },
+  },
+});
+
+pack.addSyncTable({
+  name: "Leads",
+  identityName: "Lead",
+  schema: schemas.LeadSchema,
+  dynamicOptions: {
+    getSchema: async function (context) {
+      return schemas.getSchemaWithCustomFields(context, "lead");
+    },
+  },
+  formula: {
+    name: "SyncLeads",
+    description: "Sync leads from Copper",
+    cacheTtlSecs: 0,
+    parameters: [],
+    execute: async function ([], context) {
+      return formulas.syncLeads(context);
+    },
+  },
+});
+
+pack.addSyncTable({
+  name: "ActivityTypes",
+  identityName: "ActivityType",
+  schema: schemas.ActivityTypeSchema,
+  dynamicOptions: {
+    getSchema: async function (context) {
+      return schemas.getSchemaWithCustomFields(context, "activitytype");
+    },
+  },
+  formula: {
+    name: "SyncActivityTypes",
+    description: "Sync activity types from Copper",
+    cacheTtlSecs: 0,
+    parameters: [],
+    execute: async function ([], context) {
+      return formulas.syncActivityTypes(context);
     },
   },
 });
