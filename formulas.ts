@@ -367,13 +367,21 @@ export async function syncProjects(context: coda.SyncExecutionContext) {
 
   // Get a page of results, as well as all the background info we'll need to enrich
   // the records we get back from the Copper API
-  const [response, users, copperAccount, customFieldDefinitions] =
-    await Promise.all([
-      helpers.callApi(context, "projects/search", "POST"),
-      helpers.getCopperUsers(context),
-      helpers.callApiBasicCached(context, "account"),
-      helpers.callApiBasicCached(context, "custom_field_definitions"),
-    ]);
+  const [
+    response,
+    users,
+    copperAccount,
+    customFieldDefinitions,
+    opportunities,
+    companies,
+  ] = await Promise.all([
+    helpers.callApi(context, "projects/search", "POST", { page_size: 200 }),
+    helpers.getCopperUsers(context),
+    helpers.callApiBasicCached(context, "account"),
+    helpers.callApiBasicCached(context, "custom_field_definitions"),
+    helpers.callApiBasicCached(context, "opportunities"),
+    helpers.callApiBasicCached(context, "companies"),
+  ]);
 
   // Process the results by sending each project to the enrichment function
   let projects = response.body.map((project) =>
@@ -381,6 +389,8 @@ export async function syncProjects(context: coda.SyncExecutionContext) {
       project,
       copperAccount.id,
       users,
+      opportunities,
+      companies,
       customFieldDefinitions
     )
   );
@@ -388,6 +398,7 @@ export async function syncProjects(context: coda.SyncExecutionContext) {
   // If we got a full page of results, that means there are probably more results
   // on the next page. Set up a continuation to grab the next page if so.
   let nextContinuation;
+  console.log("Projects length: " + projects.length);
   if (projects.length == constants.PAGE_SIZE)
     nextContinuation = { pageNumber: pageNumber + 1 };
 

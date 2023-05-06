@@ -582,7 +582,7 @@ export const ProjectSchema = coda.makeObjectSchema({
   type: coda.ValueType.Object,
   idProperty: "id",
   displayProperty: "name",
-  featuredProperties: ["status", "assignee", "related_resource"],
+  featuredProperties: ["status", "assignee", "company", "opportunity"],
   identity: { name: "Project" },
   includeUnknownProperties: true,
   properties: {
@@ -596,10 +596,8 @@ export const ProjectSchema = coda.makeObjectSchema({
       description: "The name of the Project",
       required: true,
     },
-    related_resource: {
-      type: coda.ValueType.String,
-      description: "The primary related resource for the Project",
-    },
+    opportunity: OpportunitySchema,
+    company: CompanyReferenceSchema,
     assignee: CopperUserSchema,
     assignee_id: {
       type: coda.ValueType.String,
@@ -758,6 +756,75 @@ const TaskSchema = coda.makeObjectSchema({
     },
   },
 });
+
+const ActivitySchema: coda.Schema = {
+  type: coda.ValueType.Object,
+  properties: {
+    id: {
+      type: coda.ValueType.Number,
+    },
+    parent_type: {
+      type: coda.ValueType.String,
+    },
+    parent: {
+      type: coda.ValueType.Object,
+      codaType: coda.ValueHintType.Reference,
+      formulaNamespace: "activity",
+      oneOf: [
+        { formulaNamespace: "lead", codaType: coda.ValueHintType.Reference },
+        { formulaNamespace: "person", codaType: coda.ValueHintType.Reference },
+        { formulaNamespace: "company", codaType: coda.ValueHintType.Reference },
+        {
+          formulaNamespace: "opportunity",
+          codaType: coda.ValueHintType.Reference,
+        },
+        { formulaNamespace: "project", codaType: coda.ValueHintType.Reference },
+        { formulaNamespace: "task", codaType: coda.ValueHintType.Reference },
+      ],
+    },
+    type: {
+      type: coda.ValueType.Object,
+      properties: {
+        id: {
+          type: coda.ValueType.Number,
+        },
+        category: {
+          type: coda.ValueType.String,
+        },
+      },
+    },
+    user_id: {
+      type: coda.ValueType.Number,
+    },
+    details: {
+      type: coda.ValueType.String,
+    },
+    activity_date: {
+      type: coda.ValueType.String,
+      codaType: coda.ValueHintType.Date,
+    },
+    old_value: {
+      type: coda.ValueType.String,
+    },
+    new_value: {
+      type: coda.ValueType.String,
+    },
+    date_created: {
+      type: coda.ValueType.String,
+      codaType: coda.ValueHintType.Date,
+    },
+    date_modified: {
+      type: coda.ValueType.String,
+      codaType: coda.ValueHintType.Date,
+    },
+  },
+  primary: "id",
+  featured: ["parent", "type", "user_id", "details"],
+  identity: {
+    name: "Activity",
+    id: "id",
+  },
+};
 /* -------------------------------------------------------------------------- */
 /*                         Dynamic Sync Table Schemas                         */
 /* -------------------------------------------------------------------------- */

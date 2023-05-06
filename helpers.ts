@@ -1,6 +1,7 @@
 import * as coda from "@codahq/packs-sdk";
 import * as constants from "./constants";
 import * as schemas from "./schemas";
+import * as helpers from "./helpers";
 import type * as types from "./types";
 
 /* -------------------------------------------------------------------------- */
@@ -58,11 +59,18 @@ export async function callApiBasicCached(
     | "account"
     | "contact_types"
     | "custom_field_definitions"
+    | "companies"
+    | "opportunities"
 ) {
+  let method = "GET";
+  if (endpoint === "companies" || endpoint === "opportunities") {
+    method = "POST";
+    endpoint += "/search";
+  }
   const response = await callApi(
     context,
     endpoint,
-    "GET",
+    method,
     { page_size: constants.PAGE_SIZE },
     60 * 5 // cache for 5 minutes
   );
@@ -485,6 +493,9 @@ export function enrichProjectResponse(
   project: any,
   copperAccountId: string,
   users: types.CopperUserApiResponse[],
+  opportunities: types.OpportunityApiResponse[],
+  companies: types.CompanyApiResponse[],
+  context: coda.SyncExecutionContext,
   customFieldDefinitions?: types.CustomFieldDefinitionApiResponse[]
 ) {
   project.url = getCopperUrl(copperAccountId, "project", project.id);
@@ -506,11 +517,34 @@ export function enrichProjectResponse(
     );
     project = Object.assign(project, customFields);
   }
-  return pruneObjectToSchema(
-    project,
-    schemas.ProjectSchema,
-    Object.keys(customFields)
-  );
+  if (project.related_resource) {
+    let relatedResourceType = project.related_resource.type;
+    let relatedResourceId = project.related_resource.id;
+
+    // Fetch related entity data based on its type
+    if (relatedResourceType === "opportunity") {
+      let relatedOpportunity = opportunities.find(
+        (opportunity) => opportunity.id == relatedResourceId
+      );
+      project.opportunity = {
+        id: relatedOpportunity.id,
+        name: relatedOpportunity.name,
+      };
+    } else if (relatedResourceType === "company") {
+      let relatedCompany = companies.find(
+        (company) => company.id == relatedResourceId
+      );
+      project.company = {
+        id: relatedCompany.id,
+        name: relatedCompany.name,
+      };
+    }
+    return pruneObjectToSchema(
+      project,
+      schemas.ProjectSchema,
+      Object.keys(customFields)
+    );
+  }
 }
 
 export function enrichActivityTypeResponse(
